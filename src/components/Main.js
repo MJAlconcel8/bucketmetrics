@@ -4,6 +4,7 @@ import nba from 'nba'
 import { Profile } from './Profile';
 import { SearchBar } from './SearchBar';
 import { DEFAULT_PLAYER_INFO } from '../constants';
+import '../styles/Main.css'
 
 export class Main extends React.Component {
 

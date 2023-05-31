@@ -1,47 +1,85 @@
 import React from 'react';
-import { AutoComplete, Input, Icon } from 'antd';
 import nba from 'nba';
 import { PROFILE_PIC_URL_PREFIX } from '../constants';
-
-const Option = AutoComplete.Option;
+import '../styles/SearchBar.css';
 
 export class SearchBar extends React.Component {
-    state = {
-        dataSource: [],
+  state = {
+    searchQuery: '',
+    searchResults: [],
+  };
+
+  handleInputChange = (event) => {
+    const value = event.target.value;
+    this.setState({ searchQuery: value }, () => {
+      this.handleSearch();
+    });
+  };
+
+  handleSearch = () => {
+    const { searchQuery } = this.state;
+
+    if (searchQuery) {
+      const searchResults = nba.searchPlayers(searchQuery).map(
+        ({ full_name, player_id }) => ({
+          full_name,
+          player_id,
+          profile_pic: `${PROFILE_PIC_URL_PREFIX}/${player_id}.png`,
+        })
+      );
+      this.setState({ searchResults });
+    } else {
+      this.setState({ searchResults: [] });
+    }
+  };
+
+  handleSelectPlayer = (playerName) => {
+    this.props.loadPlayerInfo(playerName);
+  };
+
+  renderSearchResults = () => {
+    const { searchResults } = this.state;
+
+    if (searchResults.length === 0) {
+      return null;
     }
 
-    handleSearch = (value) => {
-        console.log(value);
-        this.setState({
-            dataSource: !value ? [] : nba.searchPlayers(value).map(({ fullName, playerId }) =>
-                <Option key = {playerId}
-                        value = {fullName}>
-                    <img className = "player-option-image"
-                         src = {`${PROFILE_PIC_URL_PREFIX}/${playerId}.png`}/>
-                    <span className = "player-option-label">{fullName}</span>
-                </Option>
-            ),
-        });
-    }
+    return (
+      <ul className="search-results">
+        {searchResults.map(({ full_name, player_id, profile_pic }) => (
+          <li
+            key={player_id}
+            className="search-result"
+            onClick={() => this.handleSelectPlayer(full_name)}
+          >
+            <img
+              className="player-option-image"
+              src={profile_pic}
+              alt={full_name}
+            />
+            <span className="player-option-label">{full_name}</span>
+          </li>
+        ))}
+      </ul>
+    );
+  };
 
-    onSelect = (playerName) => {
-        this.props.loadPlayerInfo(playerName);
-    }
+  render() {
+    const { searchQuery } = this.state;
 
-    render() {
-        window.nba = nba;
-        const { dataSource } = this.state;
-        return (
-            <AutoComplete
-                className = "search-bar"
-                size = "large"
-                dataSource={dataSource}
-                onSelect = {this.onSelect}
-                onSearch = {this.handleSearch}
-                placeholder = "Search NBA Player"
-                optionLabelProp = "value">
-                <Input suffix={<Icon type = "search" className = "certain-category-icon" />} />
-            </AutoComplete>
-        );
-    }
+    return (
+      <div className="search-bar">
+        <input
+          type="text"
+          className="search-input"
+          placeholder="Search NBA players"
+          value={searchQuery}
+          onChange={this.handleInputChange}
+        />
+        {this.renderSearchResults()}
+      </div>
+    );
+  }
 }
+
+
